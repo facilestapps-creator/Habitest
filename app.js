@@ -13,7 +13,7 @@ const CONTACT_EMAIL='contacto@placeholder.com';
 const BASE_CATEGORIES=['Supermercado','Transporte','Salud','Servicios','Ocio','Alquiler','Ropa','Educacion','Mascotas','Otros'];
 const BASE_CLASSIFICATION={'Servicios':'fijo','Alquiler':'fijo','Supermercado':'variable','Transporte':'variable','Salud':'variable','Ocio':'variable','Ropa':'variable','Educacion':'variable','Mascotas':'variable','Otros':'variable'};
 const CHIP_RULES={'Supermercado':['Supermercado','Comida afuera','Delivery'],'Transporte':['SUBE/colectivo','Taxi/Uber','Nafta/peajes'],'Salud':['Farmacia','Consulta medica','Obra social/prepaga'],'Servicios':['Luz/gas/agua','Internet/celular','Streaming/suscripciones'],'Ocio':['Salidas/bares','Cine/eventos','Hobbies']};
-const CATEGORY_ICONS={'Supermercado':'\u{1F6D2}','Transporte':'\u{1F697}','Salud':'\u{1F48A}','Servicios':'\u{1F4A1}','Ocio':'\u{1F389}','Alquiler':'\u{1F3E0}','Ropa':'\u{1F455}','Educacion':'\u{1F4DA}','Mascotas':'\u{1F415}','Otros':'\u{1F4E6}'};
+const CATEGORY_ICONS={'Supermercado':'🛒','Transporte':'🚗','Salud':'💊','Servicios':'💡','Ocio':'🎉','Alquiler':'🏠','Ropa':'👕','Educacion':'📚','Mascotas':'🐕','Otros':'📦'};
 const BAR_COLORS=['#0f766e','#14b8a6','#2dd4bf','#5eead4','#99f6e4','#0d9488','#115e59','#134e4a'];
 
 function getData(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch{return fallback}}
@@ -76,11 +76,11 @@ function renderHome(){
   html+=`<div class="quick-add-card"><h2>Cuanto gastaste?</h2><div class="quick-input-row"><input type="number" id="quick-amount" class="form-input" placeholder="0.00" step="0.01"><button class="btn btn-primary" onclick="onQuickAdd()">Agregar</button></div></div>`;
   html+=`<div class="summary-cards"><div class="summary-card"><div class="label">Hoy</div><div class="value ${totalToday>0?'negative':''}">${formatCurrency(totalToday)}</div></div><div class="summary-card"><div class="label">Este mes</div><div class="value ${totalMonth>0?'negative':''}">${formatCurrency(totalMonth)}</div></div></div>`;
   if(goal){
-    html+=`<div class="goal-card" onclick="showView('goal')"><span class="goal-card-icon">\u{1F3C6}</span><div class="goal-card-amount">${formatCurrency(goal.amount)}</div>${goal.name?`<div class="goal-card-name">${goal.name}</div>`:''}${goal.deadline?`<div class="goal-card-deadline">Meta: ${formatDate(goal.deadline)}</div>`:''}${goal.description?`<div class="goal-card-desc">${goal.description}</div>`:''}</div>`;
+    html+=`<div class="goal-card" onclick="showView('goal')"><span class="goal-card-icon">🏆</span><div class="goal-card-amount">${formatCurrency(goal.amount)}</div>${goal.name?`<div class="goal-card-name">${goal.name}</div>`:''}${goal.deadline?`<div class="goal-card-deadline">Meta: ${formatDate(goal.deadline)}</div>`:''}${goal.description?`<div class="goal-card-desc">${goal.description}</div>`:''}</div>`;
   }
   html+=`<div class="recent-section"><h3>Ultimos gastos</h3>`;
-  if(recent.length===0){html+=`<div class="empty-state"><span class="emoji">\u{1F4DD}</span><p>Todavia no cargaste ningun gasto.<br>Empeza ahora!</p></div>`;}
-  else{html+=`<div class="tx-list">`;recent.forEach(t=>{const catName=catMap[t.categoryId]||'Otros',icon=CATEGORY_ICONS[catName]||'\u{1F4E6}';html+=`<div class="tx-item" onclick="showView('transactions')"><div class="tx-icon">${icon}</div><div class="tx-details"><div class="tx-category">${catName}${t.description?' - '+t.description:''}</div>${t.subcategory?`<div class="tx-subcategory">${t.subcategory}</div>`:''}</div><div class="tx-amount">${formatCurrency(t.amount)}</div><div class="tx-date">${formatDate(t.date)}</div></div>`;});html+=`</div>`;}
+  if(recent.length===0){html+=`<div class="empty-state"><span class="emoji">📝</span><p>Todavia no cargaste ningun gasto.<br>Empeza ahora!</p></div>`;}
+  else{html+=`<div class="tx-list">`;recent.forEach(t=>{const catName=catMap[t.categoryId]||'Otros',icon=CATEGORY_ICONS[catName]||'📦';html+=`<div class="tx-item" onclick="showView('transactions')"><div class="tx-icon">${icon}</div><div class="tx-details"><div class="tx-category">${catName}${t.description?' - '+t.description:''}</div>${t.subcategory?`<div class="tx-subcategory">${t.subcategory}</div>`:''}</div><div class="tx-amount">${formatCurrency(t.amount)}</div><div class="tx-date">${formatDate(t.date)}</div></div>`;});html+=`</div>`;}
   html+=`</div></div>`;
   $('main-content').innerHTML=html;
 }
@@ -142,8 +142,8 @@ function renderTransactions(){
   const transactions=getData(STORAGE_KEYS.TRANSACTIONS,[]),categories=getData(STORAGE_KEYS.CATEGORIES,[]),catMap={};
   categories.forEach(c=>catMap[c.id]=c);const sorted=[...transactions].sort((a,b)=>b.date.localeCompare(a.date));
   let html=`<div class="transactions-view"><h2 class="mb-2">Mis gastos</h2>`;
-  if(sorted.length===0){html+=`<div class="empty-state"><span class="emoji">\u{1F4CB}</span><p>No hay gastos registrados todavia.</p></div>`;}
-  else{html+=`<div class="tx-list">`;sorted.forEach(t=>{const cat=catMap[t.categoryId]||{name:'Otros'},icon=CATEGORY_ICONS[cat.name]||'\u{1F4E6}';let freqBadge=t.frequency?`<span style="font-size:0.7rem;color:#0f766e;background:#f0fdfa;padding:1px 6px;border-radius:4px;margin-left:4px;">${t.frequency}</span>`:'';html+=`<div class="tx-item"><div class="tx-icon">${icon}</div><div class="tx-details"><div class="tx-category">${cat.name}${t.description?' - '+t.description:''}${freqBadge}</div>${t.subcategory?`<div class="tx-subcategory">${t.subcategory}</div>`:''}</div><div class="tx-amount">${formatCurrency(t.amount)}</div><div class="tx-date">${formatDate(t.date)}</div><button onclick="onDeleteTransaction('${t.id}')" style="background:none;border:none;font-size:1.2rem;margin-left:4px;cursor:pointer;">\u{1F5D1}</button></div>`;});html+=`</div>`;}
+  if(sorted.length===0){html+=`<div class="empty-state"><span class="emoji">📋</span><p>No hay gastos registrados todavia.</p></div>`;}
+  else{html+=`<div class="tx-list">`;sorted.forEach(t=>{const cat=catMap[t.categoryId]||{name:'Otros'},icon=CATEGORY_ICONS[cat.name]||'📦';let freqBadge=t.frequency?`<span style="font-size:0.7rem;color:#0f766e;background:#f0fdfa;padding:1px 6px;border-radius:4px;margin-left:4px;">${t.frequency}</span>`:'';html+=`<div class="tx-item"><div class="tx-icon">${icon}</div><div class="tx-details"><div class="tx-category">${cat.name}${t.description?' - '+t.description:''}${freqBadge}</div>${t.subcategory?`<div class="tx-subcategory">${t.subcategory}</div>`:''}</div><div class="tx-amount">${formatCurrency(t.amount)}</div><div class="tx-date">${formatDate(t.date)}</div><button onclick="onDeleteTransaction('${t.id}')" style="background:none;border:none;font-size:1.2rem;margin-left:4px;cursor:pointer;">🗑</button></div>`;});html+=`</div>`;}
   html+=`</div>`;$('main-content').innerHTML=html;
 }
 function onDeleteTransaction(id){
@@ -162,7 +162,7 @@ function renderCategories(){
     const count=transactions.filter(t=>t.categoryId===c.id).length;
     const isFixed=c.classification==='fijo',isVar=c.classification==='variable',isNone=c.classification===null||c.classification===undefined;
     let classBadge='';if(isFixed)classBadge=`<span class="cat-class-label cat-class-fijo">Fijo</span>`;else if(isVar)classBadge=`<span class="cat-class-label cat-class-variable">Variable</span>`;else classBadge=`<span class="cat-class-label cat-class-none">Sin clasificar</span>`;
-    html+=`<div class="cat-item"><div><div class="cat-name">${c.name}</div><div class="cat-classification">${classBadge}<span style="font-size:0.75rem;color:#9ca3af;">${count} gasto${count!==1?'s':''}</span></div></div><div style="display:flex;align-items:center;gap:8px;">${c.isBase?'<span class="cat-badge">Base</span>':''}<div class="toggle toggle-mini ${isFixed?'active':''}" onclick="toggleCategoryClassification('${c.id}')"></div><div class="cat-actions"><button onclick="onEditCategory('${c.id}')">\u{270F}</button>${!c.isBase?`<button onclick="onDeleteCategory('${c.id}')">\u{1F5D1}</button>`:''}</div></div></div>`;
+    html+=`<div class="cat-item"><div><div class="cat-name">${c.name}</div><div class="cat-classification">${classBadge}<span style="font-size:0.75rem;color:#9ca3af;">${count} gasto${count!==1?'s':''}</span></div></div><div style="display:flex;align-items:center;gap:8px;">${c.isBase?'<span class="cat-badge">Base</span>':''}<div class="toggle toggle-mini ${isFixed?'active':''}" onclick="toggleCategoryClassification('${c.id}')"></div><div class="cat-actions"><button onclick="onEditCategory('${c.id}')">✏️</button>${!c.isBase?`<button onclick="onDeleteCategory('${c.id}')">🗑</button>`:''}</div></div></div>`;
   });
   html+=`</div></div>`;$('main-content').innerHTML=html;
 }
@@ -195,7 +195,7 @@ function renderReport(){
   const monthTx=transactions.filter(t=>getMonthKey(t.date)===monthKey),prevMonthDate=new Date(now.getFullYear(),now.getMonth()-1,1),prevMonthKey=`${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth()+1).padStart(2,'0')}`,prevMonthTx=transactions.filter(t=>getMonthKey(t.date)===prevMonthKey);
   let html=`<div class="report-view">`;
   html+=`<div class="report-month-selector"><button onclick="changeReportMonth(1)">\u25C0</button><h2>${getMonthName(monthKey)}</h2><button onclick="changeReportMonth(-1)">\u25B6</button></div>`;
-  if(monthTx.length===0){html+=`<div class="empty-state"><span class="emoji">\u{1F4CA}</span><p>No hay gastos en este mes.</p></div>`;$('main-content').innerHTML=html+`</div>`;return;}
+  if(monthTx.length===0){html+=`<div class="empty-state"><span class="emoji">📊</span><p>No hay gastos en este mes.</p></div>`;$('main-content').innerHTML=html+`</div>`;return;}
   const catTotals={};monthTx.forEach(t=>{const name=catMap[t.categoryId]||'Otros';catTotals[name]=(catTotals[name]||0)+t.amount;});
   const sortedCats=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]),maxVal=sortedCats[0]?.[1]||1,totalMonth=monthTx.reduce((s,t)=>s+t.amount,0);
   html+=`<div class="chart-container"><div class="chart-title">Gastos por categoria - ${formatCurrency(totalMonth)}</div><div class="bar-chart">`;
@@ -263,8 +263,8 @@ function renderIncomes(){
   html+=`<div class="form-group"><label class="form-label">Es parte de tu presupuesto habitual?</label><div class="radio-group"><div class="radio-option" id="inc-budget-yes" onclick="selectIncomeBudget(true)"><div class="radio-circle"></div><div><div class="radio-text">Si, es parte de mi presupuesto</div></div></div><div class="radio-option" id="inc-budget-no" onclick="selectIncomeBudget(false)"><div class="radio-circle"></div><div><div class="radio-text">No, es un ingreso extra</div><div class="radio-desc">No se usa en los calculos de disponible</div></div></div></div></div>`;
   html+=`<div id="inc-type-group" class="form-group hidden"><label class="form-label">Que tipo de ingreso es?</label><div class="radio-group"><div class="radio-option" id="inc-type-fixed" onclick="selectIncomeType('fijo')"><div class="radio-circle"></div><div><div class="radio-text">Fijo / previsible</div><div class="radio-desc">Ej: sueldo, jubilacion</div></div></div><div class="radio-option" id="inc-type-variable" onclick="selectIncomeType('variable')"><div class="radio-circle"></div><div><div class="radio-text">Variable</div><div class="radio-desc">Ej: changas, comisiones, ventas</div></div></div></div></div>`;
   html+=`<button class="btn btn-primary" onclick="onSaveIncome()">Guardar ingreso</button></div>`;
-  if(incomes.length===0){html+=`<div class="empty-state"><span class="emoji">\u{1F4B5}</span><p>Todavia no registraste ningun ingreso.</p></div>`;}
-  else{html+=`<div class="income-list">`;const sorted=[...incomes].sort((a,b)=>b.date.localeCompare(a.date));sorted.forEach(inc=>{const meta=inc.isBudget?(inc.type==='fijo'?'Fijo - Presupuesto':'Variable - Presupuesto'):'Extra (fuera de presupuesto)';html+=`<div class="income-item"><div class="income-details"><div class="income-amount">${formatCurrency(inc.amount)}</div><div class="income-meta">${inc.description||'Sin descripcion'} - ${formatDate(inc.date)} - ${meta}</div></div><div class="income-actions"><button onclick="onEditIncome('${inc.id}')">\u{270F}</button><button onclick="onDeleteIncome('${inc.id}')">\u{1F5D1}</button></div></div>`;});html+=`</div>`;}
+  if(incomes.length===0){html+=`<div class="empty-state"><span class="emoji">💵</span><p>Todavia no registraste ningun ingreso.</p></div>`;}
+  else{html+=`<div class="income-list">`;const sorted=[...incomes].sort((a,b)=>b.date.localeCompare(a.date));sorted.forEach(inc=>{const meta=inc.isBudget?(inc.type==='fijo'?'Fijo - Presupuesto':'Variable - Presupuesto'):'Extra (fuera de presupuesto)';html+=`<div class="income-item"><div class="income-details"><div class="income-amount">${formatCurrency(inc.amount)}</div><div class="income-meta">${inc.description||'Sin descripcion'} - ${formatDate(inc.date)} - ${meta}</div></div><div class="income-actions"><button onclick="onEditIncome('${inc.id}')">✏️</button><button onclick="onDeleteIncome('${inc.id}')">🗑</button></div></div>`;});html+=`</div>`;}
   html+=`</div>`;$('main-content').innerHTML=html;
   if(editingIncomeId){const inc=incomes.find(i=>i.id===editingIncomeId);if(inc){document.getElementById('inc-amount').value=inc.amount;document.getElementById('inc-desc').value=inc.description||'';document.getElementById('inc-date').value=inc.date;selectIncomeBudget(inc.isBudget);if(inc.isBudget&&inc.type)selectIncomeType(inc.type);document.querySelector('.settings-section').scrollIntoView({behavior:'smooth'});}}
 }
@@ -287,9 +287,9 @@ function onDeleteIncome(id){
 /* ===== LEVEL 2 ENTRY ===== */
 function renderLevel2(){
   let html=`<div class="level2-view"><h2>Nivel 2 - Analisis</h2><p class="level2-subtitle">Elegi que queres hacer con tus finanzas</p><div class="level2-grid">`;
-  html+=`<div class="level2-card" onclick="showView('goal')"><span class="level2-card-icon">\u{1F3C6}</span><div class="level2-card-title">Setear un objetivo</div><div class="level2-card-desc">Defini un monto de ahorro y dale seguimiento a tu progreso</div></div>`;
-  html+=`<div class="level2-card" onclick="showView('transactions')"><span class="level2-card-icon">\u{1F50D}</span><div class="level2-card-title">Donde se me escapa la plata?</div><div class="level2-card-desc">Revisa todos tus gastos filtrados por categoria</div></div>`;
-  html+=`<div class="level2-card" onclick="showView('report')"><span class="level2-card-icon">\u{1F4C8}</span><div class="level2-card-title">Donde puedo ahorrar?</div><div class="level2-card-desc">Compara tus gastos mes a mes y encontra opportunidades</div></div>`;
+  html+=`<div class="level2-card" onclick="showView('goal')"><span class="level2-card-icon">🏆</span><div class="level2-card-title">Setear un objetivo</div><div class="level2-card-desc">Defini un monto de ahorro y dale seguimiento a tu progreso</div></div>`;
+  html+=`<div class="level2-card" onclick="showView('transactions')"><span class="level2-card-icon">🔍</span><div class="level2-card-title">Donde se me escapa la plata?</div><div class="level2-card-desc">Revisa todos tus gastos filtrados por categoria</div></div>`;
+  html+=`<div class="level2-card" onclick="showView('report')"><span class="level2-card-icon">📈</span><div class="level2-card-title">Donde puedo ahorrar?</div><div class="level2-card-desc">Compara tus gastos mes a mes y encontra opportunidades</div></div>`;
   html+=`</div></div>`;
   $('main-content').innerHTML=html;
 }
@@ -325,25 +325,25 @@ function renderGoal(){
       const deadlineDate=new Date(goal.deadline+'T00:00:00');
       const monthsLeft=(deadlineDate.getFullYear()-now.getFullYear())*12+(deadlineDate.getMonth()-now.getMonth());
       const projected=totalSaved+(avgMonthly*monthsLeft);
-      if(projected>=goal.amount){projectionClass='ahead';projectionHtml=`\u{1F389} Vas bien! A este ritmo llegas con ${formatCurrency(projected-goal.amount)} de sobra`;}
+      if(projected>=goal.amount){projectionClass='ahead';projectionHtml=`🎉 Vas bien! A este ritmo llegas con ${formatCurrency(projected-goal.amount)} de sobra`;}
       else{projectionClass='behind';projectionHtml=`\u26A0 A este ritmo te faltan ${formatCurrency(goal.amount-projected)} para llegar a la meta`;}
     }else if(goal.deadline&&avgMonthly<=0){
       projectionClass='behind';projectionHtml=`\u26A0 Estas gastando mas de lo que ingresa. No vas a llegar al objetivo a este ritmo`;
     }else if(!goal.deadline&&avgMonthly>0){
       const monthsNeeded=Math.ceil(remaining/avgMonthly);
-      projectionClass='ontrack';projectionHtml=`\u{1F4C5} A este ritmo llegas en ${monthsNeeded} mes${monthsNeeded!==1?'es':''}`;
+      projectionClass='ontrack';projectionHtml=`📅 A este ritmo llegas en ${monthsNeeded} mes${monthsNeeded!==1?'es':''}`;
     }else if(!goal.deadline&&avgMonthly<=0){
       projectionClass='behind';projectionHtml=`\u26A0 Estas gastando mas de lo que ingresa. Necesitas ajustar tus gastos para empezar a ahorrar`;
     }else{
       projectionHtml=`Carga mas datos para ver la proyeccion`;
     }
-    html+=`<div class="goal-card"><span class="goal-card-icon">\u{1F3C6}</span><div class="goal-card-amount">${formatCurrency(goal.amount)}</div>${goal.name?`<div class="goal-card-name">${goal.name}</div>`:''}${goal.deadline?`<div class="goal-card-deadline">Meta: ${formatDate(goal.deadline)}</div>`:''}${goal.description?`<div class="goal-card-desc">${goal.description}</div>`:''}</div>`;
+    html+=`<div class="goal-card"><span class="goal-card-icon">🏆</span><div class="goal-card-amount">${formatCurrency(goal.amount)}</div>${goal.name?`<div class="goal-card-name">${goal.name}</div>`:''}${goal.deadline?`<div class="goal-card-deadline">Meta: ${formatDate(goal.deadline)}</div>`:''}${goal.description?`<div class="goal-card-desc">${goal.description}</div>`:''}</div>`;
     html+=`<div class="goal-progress"><h3>Progreso</h3>`;
     html+=`<div class="goal-progress-bar"><div class="goal-progress-fill" style="width:${pct}%"></div></div>`;
     html+=`<div class="goal-progress-stats"><div class="goal-stat"><div class="goal-stat-value">${formatCurrency(totalSaved)}</div><div class="goal-stat-label">Ahorrado</div></div><div class="goal-stat"><div class="goal-stat-value">${formatCurrency(remaining>0?remaining:0)}</div><div class="goal-stat-label">Falta</div></div></div>`;
     if(monthCount>0)html+=`<div class="goal-stat" style="margin-bottom:12px;text-align:center"><div class="goal-stat-value">${formatCurrency(avgMonthly)}</div><div class="goal-stat-label">Ritmo mensual promedio</div></div>`;
     html+=`<div class="goal-projection ${projectionClass}">${projectionHtml}</div></div>`;
-    html+=`<div class="goal-actions"><button class="btn btn-secondary" onclick="onEditGoal()">\u{270F} Editar</button><button class="btn btn-danger" onclick="onDeleteGoal()">\u{1F5D1} Borrar</button></div>`;
+    html+=`<div class="goal-actions"><button class="btn btn-secondary" onclick="onEditGoal()">✏️ Editar</button><button class="btn btn-danger" onclick="onDeleteGoal()">🗑 Borrar</button></div>`;
   }else{
     html+=`<div class="settings-section">`;
     html+=`<div class="form-group"><label class="form-label">Monto objetivo *</label><input type="number" id="goal-amount" class="form-input" placeholder="Ej: 50000" step="0.01" value="${editingGoalId&&goal?goal.amount:''}"></div>`;
@@ -378,7 +378,7 @@ function renderContact(){
   html+=`<div class="form-group"><label class="form-label">Email *</label><input type="email" id="contact-email" class="form-input" placeholder="tu@email.com"><div class="form-error" id="contact-email-error">El email es obligatorio y debe tener formato valido</div></div>`;
   html+=`<div class="form-group"><label class="form-label">Mensaje *</label><textarea id="contact-message" class="form-input form-textarea" rows="4" placeholder="Contanos en que te podemos ayudar..."></textarea><div class="form-error" id="contact-message-error">El mensaje es obligatorio</div></div>`;
   html+=`<button class="btn btn-primary" onclick="onSendContact()">Enviar mensaje</button>`;
-  html+=`<div id="contact-success" class="contact-success hidden"><p><strong>\u{1F4E8} Se abrio tu app de correo</strong><br>Si no paso nada visible, copia este mensaje y envialo manualmente a <strong>${CONTACT_EMAIL}</strong></p></div>`;
+  html+=`<div id="contact-success" class="contact-success hidden"><p><strong>📨 Se abrio tu app de correo</strong><br>Si no paso nada visible, copia este mensaje y envialo manualmente a <strong>${CONTACT_EMAIL}</strong></p></div>`;
   html+=`</div></div>`;
   $('main-content').innerHTML=html;
 }
