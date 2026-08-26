@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f766e">
+  <title>Finanzas Personales</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%B0%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <header class="app-header">
+      <h1>\u{1F4B0} Mis Finanzas</h1>
+    </header>
+    <div id="backup-banner" class="backup-banner hidden">
+      <span>\u26A0 Hace un backup de tus datos</span>
+      <button id="btn-backup-now" class="btn-small">Exportar</button>
+      <button id="btn-dismiss-backup" class="btn-small btn-ghost">Despues</button>
+    </div>
+    <main id="main-content"></main>
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-view="home"><span class="nav-icon">\u{1F3E0}</span><span class="nav-label">Inicio</span></button>
+      <button class="nav-btn" data-view="transactions"><span class="nav-icon">\u{1F4CB}</span><span class="nav-label">Gastos</span></button>
+      <button class="nav-btn nav-btn-primary" data-view="add"><span class="nav-icon">\u2795</span></button>
+      <button class="nav-btn" data-view="report"><span class="nav-icon">\u{1F4CA}</span><span class="nav-label">Resumen</span></button>
+      <button class="nav-btn" data-view="settings"><span class="nav-icon">\u2699</span><span class="nav-label">Mas</span></button>
+    </nav>
+  </div>
+  <div id="alert-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <h3 id="alert-title">Confirmar</h3>
+      <p id="alert-message"></p>
+      <div class="modal-actions">
+        <button id="alert-cancel" class="btn btn-secondary">Cancelar</button>
+        <button id="alert-confirm" class="btn btn-danger">Confirmar</button>
+      </div>
+    </div>
+  </div>
+  <div id="classify-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <h3>Clasificar categoria</h3>
+      <p class="chip-subtitle" id="classify-subtitle">Como clasificas esta categoria?</p>
+      <div class="chip-grid">
+        <div class="chip-option" onclick="onClassifyCategory('fijo')">Gasto fijo (se repite todos los meses)</div>
+        <div class="chip-option" onclick="onClassifyCategory('variable')">Gasto variable (cambia mes a mes)</div>
+      </div>
+    </div>
+  </div>
+  <div id="freq-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <h3>Frecuencia del gasto</h3>
+      <p class="chip-subtitle">Este gasto se repite todos los meses, o es intercalado/compartido?</p>
+      <div class="chip-grid">
+        <div class="chip-option" onclick="onSelectFrequency('todos los meses')">Todos los meses</div>
+        <div class="chip-option" onclick="onSelectFrequency('intercalado')">Intercalado / bimestral / trimestral</div>
+        <div class="chip-option" onclick="onSelectFrequency('compartido')">Compartido con alguien mas</div>
+      </div>
+      <button class="btn btn-secondary btn-full" onclick="onSelectFrequency(null)">Prefiero no responder</button>
+    </div>
+  </div>
+  <div id="toast" class="toast hidden"></div>
+  <script src="app.js"></script>
+  <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
+</body>
+</html>
