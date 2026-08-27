@@ -39,6 +39,7 @@ function initData(){
   if(!getData(STORAGE_KEYS.BACKUP_STATE))setData(STORAGE_KEYS.BACKUP_STATE,{lastBackupDate:new Date().toISOString(),transactionsSinceBackup:0,dismissedDate:null});
   if(!getData(STORAGE_KEYS.INCOMES))setData(STORAGE_KEYS.INCOMES,[]);
   if(!getData(STORAGE_KEYS.GOAL))setData(STORAGE_KEYS.GOAL,null);
+  if(!getData(STORAGE_KEYS.FIRST_USE_DATE))setData(STORAGE_KEYS.FIRST_USE_DATE,new Date().toISOString());
 }
 
 function normalizeText(text){if(!text)return'';return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\d+/g,'').replace(/\s+/g,' ').trim();}
@@ -442,7 +443,21 @@ function onImportFile(input){
   });
   input.value='';
 }
-
+/* ===== LEVEL 2 TRIGGER ===== */
+function checkLevel2Trigger(){
+  const dismissed=getData(STORAGE_KEYS.LEVEL2_OFFER_DISMISSED,false);
+  if(dismissed)return;
+  const firstUseStr=getData(STORAGE_KEYS.FIRST_USE_DATE);
+  if(!firstUseStr)return;
+  const firstUse=new Date(firstUseStr);
+  const now=new Date();
+  const monthsDiff=(now.getFullYear()-firstUse.getFullYear())*12+(now.getMonth()-firstUse.getMonth());
+  if(monthsDiff>=2){showLevel2Offer();}
+}
+function showLevel2Offer(){$('level2-offer-modal').classList.remove('hidden');}
+function hideLevel2Offer(){$('level2-offer-modal').classList.add('hidden');}
+function acceptLevel2Offer(){hideLevel2Offer();showView('level2');}
+function dismissLevel2Offer(){setData(STORAGE_KEYS.LEVEL2_OFFER_DISMISSED,true);hideLevel2Offer();showToast('Podes volver al Nivel 2 cuando quieras desde Configuracion');}
 /* ===== TOAST ===== */
 let toastTimeout;
 function showToast(message){
@@ -457,5 +472,5 @@ function setupEventListeners(){
 }
 
 /* ===== BOOT ===== */
-function init(){initData();setupEventListeners();showView('home');}
+function init(){initData();setupEventListeners();showView('home');checkLevel2Trigger();}
 init();
