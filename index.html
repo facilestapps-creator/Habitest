@@ -64,6 +64,21 @@
       <button class="btn btn-secondary btn-full" onclick="onSelectFrequency(null)">Prefiero no responder</button>
     </div>
   </div>
+    <div id="level2-offer-modal" class="modal hidden">
+    <div class="modal-overlay" onclick="hideLevel2Offer()"></div>
+    <div class="modal-content" style="text-align:center">
+      <div style="font-size:3rem;margin-bottom:12px">⭐</div>
+      <h3 style="margin-bottom:8px">Listo para el siguiente nivel?</h3>
+      <p style="color:#6b7280;font-size:0.95rem;line-height:1.5;margin-bottom:20px">
+        Llevas 2 meses viendo como se mueven tus finanzas.<br>
+        Queres pasar al <strong>Nivel 2</strong> para empezar a proyectar y ahorrar con objetivo?
+      </p>
+      <div class="modal-actions" style="flex-direction:column;gap:10px">
+        <button class="btn btn-primary" onclick="acceptLevel2Offer()" style="width:100%">Si, quiero probarlo</button>
+        <button class="btn btn-ghost" onclick="dismissLevel2Offer()" style="width:100%">Ahora no</button>
+      </div>
+    </div>
+  </div>
   <div id="toast" class="toast hidden"></div>
   <script src="app.js"></script>
   <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
