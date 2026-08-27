@@ -4,7 +4,8 @@
 
 const STORAGE_KEYS={
   TRANSACTIONS:'fin_transactions',CATEGORIES:'fin_categories',LEARNING:'fin_learning',
-  SETTINGS:'fin_settings',BACKUP_STATE:'fin_backup_state',INCOMES:'fin_incomes',GOAL:'fin_goal'
+  SETTINGS:'fin_settings',BACKUP_STATE:'fin_backup_state',INCOMES:'fin_incomes',GOAL:'fin_goal',
+  FIRST_USE_DATE:'fin_first_use_date',LEVEL2_OFFER_DISMISSED:'fin_level2_offer_dismissed'
 };
 
 // TODO: reemplazar por el mail real cuando este creado
