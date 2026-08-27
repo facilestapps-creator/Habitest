@@ -60,7 +60,7 @@ function showView(viewName){
   const main=$('main-content');main.innerHTML='';main.scrollTop=0;
   switch(viewName){
     case'home':renderHome();break;case'add':renderAddTransaction();break;case'transactions':renderTransactions();break;
-    case'report':renderReport();break;case'settings':renderSettings();break;case'categories':renderCategories();break;
+    case'chart':renderChart();break;case'report':renderReport();break;case'settings':renderSettings();break;case'categories':renderCategories();break;
     case'incomes':renderIncomes();break;case'level2':renderLevel2();break;case'goal':renderGoal();break;case'contact':renderContact();break;
   }
   checkBackupReminder();
@@ -190,6 +190,41 @@ function toggleCategoryClassification(id){
   setData(STORAGE_KEYS.CATEGORIES,categories);renderCategories();
 }
 
+/* ===== CHART (PIE) ===== */
+function renderChart(){
+  const transactions=getData(STORAGE_KEYS.TRANSACTIONS,[]),categories=getData(STORAGE_KEYS.CATEGORIES,[]);
+  const now=new Date(),currentMonthKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const monthTx=transactions.filter(t=>getMonthKey(t.date)===currentMonthKey);
+  const catMap={};categories.forEach(c=>catMap[c.id]=c.name);
+  const catTotals={};monthTx.forEach(t=>{const name=catMap[t.categoryId]||'Otros';catTotals[name]=(catTotals[name]||0)+t.amount;});
+  const totalMonth=monthTx.reduce((s,t)=>s+t.amount,0);
+  let html=`<div class="chart-view"><h2>Gastos del mes</h2>`;
+  html+=`<p class="chart-subtitle">${getMonthName(currentMonthKey)}</p>`;
+  if(monthTx.length===0){
+    html+=`<div class="pie-empty"><span class="emoji">📊</span><p>No hay gastos este mes.<br>Carga tu primer gasto para ver el grafico!</p></div>`;
+  }else{
+    const sortedCats=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]);
+    const pieColors=['#0f766e','#14b8a6','#2dd4bf','#5eead4','#99f6e4','#0d9488','#115e59','#134e4a','#f59e0b','#ef4444'];
+    let conicGradient=[],currentDeg=0;
+    sortedCats.forEach(([name,amount],i)=>{
+      const pct=(amount/totalMonth)*100;
+      const deg=(amount/totalMonth)*360;
+      conicGradient.push(`${pieColors[i%pieColors.length]} ${currentDeg}deg ${currentDeg+deg}deg`);
+      currentDeg+=deg;
+    });
+    html+=`<div class="pie-container">`;
+    html+=`<div class="pie-chart" style="background:conic-gradient(${conicGradient.join(',')})"></div>`;
+    html+=`<div class="pie-total">${formatCurrency(totalMonth)}<div class="pie-total-label">Total del mes</div></div>`;
+    html+=`<div class="pie-legend">`;
+    sortedCats.forEach(([name,amount],i)=>{
+      const pct=((amount/totalMonth)*100).toFixed(1);
+      html+=`<div class="pie-legend-item"><div class="pie-legend-color" style="background:${pieColors[i%pieColors.length]}"></div><div class="pie-legend-name">${name}</div><div class="pie-legend-value">${formatCurrency(amount)}</div><div class="pie-legend-pct">${pct}%</div></div>`;
+    });
+    html+=`</div></div>`;
+  }
+  html+=`</div>`;$('main-content').innerHTML=html;
+}
+
 /* ===== REPORT ===== */
 function renderReport(){
   const now=new Date();now.setMonth(now.getMonth()-reportMonthOffset);const monthKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
@@ -247,7 +282,8 @@ function renderSettings(){
   html+=`<div class="settings-section"><h3>Nivel 2</h3><button class="btn btn-secondary btn-full" onclick="showView('level2')">Entrar a Nivel 2</button></div>`;
   html+=`<div class="settings-section"><h3>Objetivo de ahorro</h3><button class="btn btn-secondary btn-full" onclick="showView('goal')">Gestionar objetivo</button></div>`;
   html+=`<div class="settings-section"><h3>Ingresos</h3><button class="btn btn-secondary btn-full" onclick="showView('incomes')">Gestionar ingresos</button></div>`;
-  html+=`<div class="settings-section"><h3>Backup</h3><div class="backup-actions"><button class="btn btn-primary" onclick="exportBackup()">Exportar datos</button><button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">Importar datos</button><input type="file" id="import-file" accept=".json" style="display:none" onchange="onImportFile(this)"></div></div>`;
+  html+=`<div class="settings-section"><h3>Contacto</h3><button class="btn btn-secondary btn-full" onclick="showView('contact')">Escribinos</button></div>`;
+  html+=`<div class="settings-section"><h3>Backup</h3>`;
   html+=`<div class="settings-section"><h3>Categorias</h3><button class="btn btn-secondary btn-full" onclick="showView('categories')">Gestionar categorias</button></div>`;
   $('main-content').innerHTML=html;
 }
