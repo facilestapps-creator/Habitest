@@ -23,10 +23,20 @@
     <nav class="bottom-nav">
       <button class="nav-btn active" data-view="home"><span class="nav-icon">🏠</span><span class="nav-label">Inicio</span></button>
       <button class="nav-btn" data-view="transactions"><span class="nav-icon">📋</span><span class="nav-label">Gastos</span></button>
-      <button class="nav-btn nav-btn-primary" data-view="add"><span class="nav-icon">➕</span></button>
+      <button class="nav-btn nav-btn-primary" id="nav-add-btn" data-view="add"><span class="nav-icon">➕</span></button>
       <button class="nav-btn" data-view="chart"><span class="nav-icon">📊</span><span class="nav-label">Grafico</span></button>
       <button class="nav-btn" data-view="settings"><span class="nav-icon">⚙️</span><span class="nav-label">Mas</span></button>
     </nav>
+  </div>
+  <div id="add-choice-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <h3>Que queres cargar?</h3>
+      <div class="chip-grid">
+        <div class="chip-option" onclick="chooseAddType('gasto')">💸 Gasto</div>
+        <div class="chip-option" onclick="chooseAddType('ingreso')">💵 Ingreso</div>
+      </div>
+    </div>
   </div>
   <div id="alert-modal" class="modal hidden">
     <div class="modal-overlay"></div>

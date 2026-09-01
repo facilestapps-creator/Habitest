@@ -5,11 +5,10 @@
 const STORAGE_KEYS={
   TRANSACTIONS:'fin_transactions',CATEGORIES:'fin_categories',LEARNING:'fin_learning',
   SETTINGS:'fin_settings',BACKUP_STATE:'fin_backup_state',INCOMES:'fin_incomes',GOAL:'fin_goal',
-  FIRST_USE_DATE:'fin_first_use_date',LEVEL2_OFFER_DISMISSED:'fin_level2_offer_dismissed'
+  FIRST_USE_DATE:'fin_first_use_date',LEVEL2_OFFER_DISMISSED:'fin_level2_offer_dismissed',LEVEL2_ENTERED:'fin_level2_entered'
 };
 
-// TODO: reemplazar por el mail real cuando este creado
-const CONTACT_EMAIL='contacto@placeholder.com';
+const CONTACT_EMAIL='info.habitest@gmail.com';
 
 const BASE_CATEGORIES=['Supermercado','Transporte','Salud','Servicios','Ocio','Alquiler','Ropa','Educacion','Mascotas','Otros'];
 const BASE_CLASSIFICATION={'Servicios':'fijo','Alquiler':'fijo','Supermercado':'variable','Transporte':'variable','Salud':'variable','Ocio':'variable','Ropa':'variable','Educacion':'variable','Mascotas':'variable','Otros':'variable'};
@@ -324,6 +323,7 @@ function onDeleteIncome(id){
 
 /* ===== LEVEL 2 ENTRY ===== */
 function renderLevel2(){
+  setData(STORAGE_KEYS.LEVEL2_ENTERED,true);
   let html=`<div class="level2-view"><h2>Nivel 2 - Analisis</h2><p class="level2-subtitle">Elegi que queres hacer con tus finanzas</p><div class="level2-grid">`;
   html+=`<div class="level2-card" onclick="showView('goal')"><span class="level2-card-icon">🏆</span><div class="level2-card-title">Setear un objetivo</div><div class="level2-card-desc">Defini un monto de ahorro y dale seguimiento a tu progreso</div></div>`;
   html+=`<div class="level2-card" onclick="showView('transactions')"><span class="level2-card-icon">🔍</span><div class="level2-card-title">Donde se me escapa la plata?</div><div class="level2-card-desc">Revisa todos tus gastos filtrados por categoria</div></div>`;
@@ -366,12 +366,12 @@ function renderGoal(){
       if(projected>=goal.amount){projectionClass='ahead';projectionHtml=`🎉 Vas bien! A este ritmo llegas con ${formatCurrency(projected-goal.amount)} de sobra`;}
       else{projectionClass='behind';projectionHtml=`\u26A0 A este ritmo te faltan ${formatCurrency(goal.amount-projected)} para llegar a la meta`;}
     }else if(goal.deadline&&avgMonthly<=0){
-      projectionClass='behind';projectionHtml=`\u26A0 Estas gastando mas de lo que ingresa. No vas a llegar al objetivo a este ritmo`;
+      projectionClass='behind';projectionHtml=`\u26A0 Este ritmo aleja un poco la meta: los gastos vienen superando lo ahorrado. Achicar algun gasto variable ayuda a acercarte de nuevo`;
     }else if(!goal.deadline&&avgMonthly>0){
       const monthsNeeded=Math.ceil(remaining/avgMonthly);
       projectionClass='ontrack';projectionHtml=`📅 A este ritmo llegas en ${monthsNeeded} mes${monthsNeeded!==1?'es':''}`;
     }else if(!goal.deadline&&avgMonthly<=0){
-      projectionClass='behind';projectionHtml=`\u26A0 Estas gastando mas de lo que ingresa. Necesitas ajustar tus gastos para empezar a ahorrar`;
+      projectionClass='behind';projectionHtml=`\u26A0 Por ahora los gastos superan lo que se logra ahorrar. Achicar algun gasto variable es un buen primer paso para arrancar la meta`;
     }else{
       projectionHtml=`Carga mas datos para ver la proyeccion`;
     }
@@ -446,8 +446,8 @@ function checkBackupReminder(){
   const backupState=getData(STORAGE_KEYS.BACKUP_STATE,{}),lastBackup=new Date(backupState.lastBackupDate||0),now=new Date();
   const daysSince=(now-lastBackup)/(1000*60*60*24),txCount=backupState.transactionsSinceBackup||0,dismissed=backupState.dismissedDate?new Date(backupState.dismissedDate):null;
   const banner=$('backup-banner');
-  if(dismissed&&(now-dismissed)/(1000*60*60*24)<2){banner.classList.add('hidden');return;}
-  if(daysSince>=7||txCount>=10){banner.classList.remove('hidden');}else{banner.classList.add('hidden');}
+  if(dismissed&&(now-dismissed)/(1000*60*60*24)<1){banner.classList.add('hidden');return;}
+  if(daysSince>=3||txCount>=5){banner.classList.remove('hidden');}else{banner.classList.add('hidden');}
 }
 function dismissBackup(){
   const backupState=getData(STORAGE_KEYS.BACKUP_STATE,{});backupState.dismissedDate=new Date().toISOString();setData(STORAGE_KEYS.BACKUP_STATE,backupState);$('backup-banner').classList.add('hidden');
@@ -502,9 +502,18 @@ function showToast(message){
 
 /* ===== EVENT LISTENERS ===== */
 function setupEventListeners(){
-  document.querySelectorAll('.nav-btn').forEach(btn=>{btn.addEventListener('click',()=>showView(btn.dataset.view));});
+  document.querySelectorAll('.nav-btn').forEach(btn=>{if(btn.id!=='nav-add-btn')btn.addEventListener('click',()=>showView(btn.dataset.view));});
+  $('nav-add-btn').addEventListener('click',onCentralAddClick);
   $('alert-cancel').addEventListener('click',hideAlert);$('alert-confirm').addEventListener('click',confirmAlert);
   $('btn-backup-now').addEventListener('click',exportBackup);$('btn-dismiss-backup').addEventListener('click',dismissBackup);
+}
+function onCentralAddClick(){
+  if(getData(STORAGE_KEYS.LEVEL2_ENTERED,false)){$('add-choice-modal').classList.remove('hidden');}
+  else{showView('add');}
+}
+function chooseAddType(type){
+  $('add-choice-modal').classList.add('hidden');
+  showView(type==='ingreso'?'incomes':'add');
 }
 
 /* ===== BOOT ===== */
