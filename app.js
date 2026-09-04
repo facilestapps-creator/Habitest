@@ -61,6 +61,7 @@ function showView(viewName){
     case'home':renderHome();break;case'add':renderAddTransaction();break;case'transactions':renderTransactions();break;
     case'chart':renderChart();break;case'report':renderReport();break;case'settings':renderSettings();break;case'categories':renderCategories();break;
     case'incomes':renderIncomes();break;case'level2':renderLevel2();break;case'goal':renderGoal();break;case'contact':renderContact();break;
+    case'login':renderLogin();break;
   }
   checkBackupReminder();
 }
@@ -435,6 +436,39 @@ function onSendContact(){
   showToast('Mail preparado');
 }
 
+/* ===== LOGIN ===== */
+function renderLogin(){
+  let html=`<div class="login-view"><h2>Iniciar sesion</h2>`;
+  html+=`<p class="login-subtitle">Ingresa tu email y te enviamos un link de acceso</p>`;
+  html+=`<div class="settings-section">`;
+  html+=`<div class="form-group"><label class="form-label">Email</label><input type="email" id="login-email" class="form-input" placeholder="tu@email.com"></div>`;
+  html+=`<button class="btn btn-primary" id="login-submit-btn" onclick="onSendLoginLink()">Enviarme el link de acceso</button>`;
+  html+=`</div></div>`;
+  $('main-content').innerHTML=html;
+}
+async function onSendLoginLink(){
+  const email=document.getElementById('login-email').value.trim();
+  const btn=document.getElementById('login-submit-btn');
+  btn.disabled=true;btn.textContent='Enviando...';
+  try{
+    const {error}=await supabaseClient.auth.signInWithOtp({email});
+    if(error){showToast(error.message||'No se pudo enviar el link de acceso');}
+    else{showToast('Revisá tu email');}
+  }catch(err){
+    showToast('No se pudo conectar con el servicio de acceso');
+  }finally{
+    btn.disabled=false;btn.textContent='Enviarme el link de acceso';
+  }
+}
+async function checkAuthSession(){
+  try{
+    const {data}=await supabaseClient.auth.getSession();
+    if(data.session){console.log('Sesión activa:',data.session.user.email);}
+  }catch(err){
+    console.log('No hay sesion activa:',err);
+  }
+}
+
 /* ===== MODALS ===== */
 let alertCallback=null;
 function showAlert(title,message,onConfirm){alertCallback=onConfirm;$('alert-title').textContent=title;$('alert-message').textContent=message;$('alert-modal').classList.remove('hidden');}
@@ -517,5 +551,5 @@ function chooseAddType(type){
 }
 
 /* ===== BOOT ===== */
-function init(){initData();setupEventListeners();showView('home');checkLevel2Trigger();}
+function init(){initData();setupEventListeners();showView('home');checkLevel2Trigger();checkAuthSession();}
 init();

@@ -214,6 +214,12 @@ input[type="number"]{font-variant-numeric:tabular-nums}
 .contact-success{background:#f0fdfa;border:1px solid #99f6e4;border-radius:14px;padding:16px;margin-top:16px}
 .contact-success p{font-size:0.9rem;color:#0f766e;line-height:1.5}
 
+/* ===== LOGIN ===== */
+.login-view{padding-bottom:20px}
+.login-view h2{font-size:1.3rem;margin-bottom:8px;color:#1a1a1a}
+.login-subtitle{font-size:0.9rem;color:#6b7280;margin-bottom:20px}
+.btn:disabled{opacity:0.6;pointer-events:none}
+
 /* ===== PIE CHART ===== */
 .chart-view{padding-bottom:20px}
 .chart-view h2{font-size:1.2rem;margin-bottom:8px;color:#1a1a1a}
