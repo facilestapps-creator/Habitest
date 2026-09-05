@@ -29,8 +29,9 @@
     </nav>
   </div>
   <div id="add-choice-modal" class="modal hidden">
-    <div class="modal-overlay"></div>
+    <div class="modal-overlay" onclick="hideAddChoice()"></div>
     <div class="modal-content">
+      <button class="modal-close" onclick="hideAddChoice()" aria-label="Cerrar">✕</button>
       <h3>Que queres cargar?</h3>
       <div class="chip-grid">
         <div class="chip-option" onclick="chooseAddType('gasto')">💸 Gasto</div>

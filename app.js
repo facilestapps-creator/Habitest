@@ -61,7 +61,7 @@ function showView(viewName){
     case'home':renderHome();break;case'add':renderAddTransaction();break;case'transactions':renderTransactions();break;
     case'chart':renderChart();break;case'report':renderReport();break;case'settings':renderSettings();break;case'categories':renderCategories();break;
     case'incomes':renderIncomes();break;case'level2':renderLevel2();break;case'goal':renderGoal();break;case'contact':renderContact();break;
-    case'login':renderLogin();break;
+    case'login':renderLogin();break;case'splash':renderSplash();break;
   }
   checkBackupReminder();
 }
@@ -75,7 +75,6 @@ function renderHome(){
   const recent=[...transactions].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   const catMap={};categories.forEach(c=>catMap[c.id]=c.name);
   let html=`<div class="home-view">`;
-  html+=`<div class="quick-add-card"><h2>Cuanto gastaste?</h2><div class="quick-input-row"><input type="number" id="quick-amount" class="form-input" placeholder="0.00" step="0.01"><button class="btn btn-primary" onclick="onQuickAdd()">Agregar</button></div></div>`;
   html+=`<div class="summary-cards"><div class="summary-card"><div class="label">Hoy</div><div class="value ${totalToday>0?'negative':''}">${formatCurrency(totalToday)}</div></div><div class="summary-card"><div class="label">Este mes</div><div class="value ${totalMonth>0?'negative':''}">${formatCurrency(totalMonth)}</div></div></div>`;
   if(goal){
     html+=`<div class="goal-card" onclick="showView('goal')"><span class="goal-card-icon">🏆</span><div class="goal-card-amount">${formatCurrency(goal.amount)}</div>${goal.name?`<div class="goal-card-name">${goal.name}</div>`:''}${goal.deadline?`<div class="goal-card-deadline">Meta: ${formatDate(goal.deadline)}</div>`:''}${goal.description?`<div class="goal-card-desc">${goal.description}</div>`:''}</div>`;
@@ -86,7 +85,6 @@ function renderHome(){
   html+=`</div></div>`;
   $('main-content').innerHTML=html;
 }
-function onQuickAdd(){const amount=parseFloat($('quick-amount').value);if(!amount||amount<=0){showToast('Ingresa un monto valido');return;}pendingTransaction={id:generateId(),amount,description:'',date:todayStr(),categoryId:null,subcategory:null};showView('add');}
 
 /* ===== ADD TRANSACTION ===== */
 function renderAddTransaction(){
@@ -157,7 +155,7 @@ function onDeleteTransaction(id){
 /* ===== CATEGORIES ===== */
 function renderCategories(){
   const categories=getData(STORAGE_KEYS.CATEGORIES,[]),transactions=getData(STORAGE_KEYS.TRANSACTIONS,[]);
-  let html=`<div class="categories-view"><h2 class="mb-2">Categorias</h2>`;
+  let html=`<div class="categories-view"><button class="btn-back" onclick="showView('settings')">‹ Volver</button><h2 class="mb-2">Categorias</h2>`;
   html+=`<div class="add-category-form"><input type="text" id="new-cat-name" class="form-input" placeholder="Nueva categoria..."><button class="btn btn-primary" style="width:auto;padding:12px 16px;" onclick="onAddCategory()">Agregar</button></div>`;
   html+=`<div class="cat-list">`;
   categories.forEach(c=>{
@@ -191,15 +189,49 @@ function toggleCategoryClassification(id){
 }
 
 /* ===== CHART (PIE) ===== */
-function renderChart(){
-  const transactions=getData(STORAGE_KEYS.TRANSACTIONS,[]),categories=getData(STORAGE_KEYS.CATEGORIES,[]);
+function renderChart(monthKey){
+  const transactions=getData(STORAGE_KEYS.TRANSACTIONS,[]),incomes=getData(STORAGE_KEYS.INCOMES,[]);
+  const months=[...new Set(transactions.map(t=>getMonthKey(t.date)).concat(incomes.map(i=>getMonthKey(i.date))))].sort().reverse();
   const now=new Date(),currentMonthKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const monthTx=transactions.filter(t=>getMonthKey(t.date)===currentMonthKey);
+  if(months.length===0){
+    const html=`<div class="chart-view"><h2>Gastos del mes</h2><div class="pie-empty"><span class="emoji">📊</span><p>No hay gastos este mes.<br>Carga tu primer gasto para ver el grafico!</p></div></div>`;
+    $('main-content').innerHTML=html;
+    return;
+  }
+  if(!monthKey||!months.includes(monthKey))monthKey=months.includes(currentMonthKey)?currentMonthKey:months[0];
+  let html=`<div class="chart-view"><h2>Gastos del mes</h2>`;
+  html+=`<select id="chart-month-select" class="form-select mb-2" onchange="onChartMonthChange()">`;
+  months.forEach(m=>{html+=`<option value="${m}" ${m===monthKey?'selected':''}>${getMonthName(m)}</option>`;});
+  html+=`</select>`;
+  html+=`<div id="chart-body"></div></div>`;
+  $('main-content').innerHTML=html;
+  buildChartBody(monthKey);
+}
+function buildChartBody(monthKey){
+  const transactions=getData(STORAGE_KEYS.TRANSACTIONS,[]),incomes=getData(STORAGE_KEYS.INCOMES,[]),categories=getData(STORAGE_KEYS.CATEGORIES,[]);
+  const monthTx=transactions.filter(t=>getMonthKey(t.date)===monthKey);
+  const monthIncome=incomes.filter(i=>getMonthKey(i.date)===monthKey);
+  const totalExpenses=monthTx.reduce((s,t)=>s+t.amount,0);
+  const totalIncomes=monthIncome.reduce((s,i)=>s+i.amount,0);
+  const noIncomes=totalIncomes<=0;
+  const EMPTY_INCOMES='No hay ingresos registrados este mes';
+  let html=`<p class="chart-subtitle">${getMonthName(monthKey)}</p>`;
+  if(noIncomes){
+    html+=buildPieEmptyBlock('Ingresos vs Gastos',EMPTY_INCOMES);
+    html+=buildPieEmptyBlock('Ingresos por tipo',EMPTY_INCOMES);
+  }else{
+    html+=buildPieBlock('Ingresos vs Gastos',[{name:'Ingresos',amount:totalIncomes,color:'#10b981'},{name:'Gastos',amount:totalExpenses,color:'#ef4444'}],totalIncomes+totalExpenses,'Movimiento total del mes');
+    const fijo=monthIncome.filter(i=>i.isBudget&&i.type==='fijo').reduce((s,i)=>s+i.amount,0);
+    const variable=monthIncome.filter(i=>i.isBudget&&i.type==='variable').reduce((s,i)=>s+i.amount,0);
+    const extra=monthIncome.filter(i=>!i.isBudget).reduce((s,i)=>s+i.amount,0);
+    const slices=[];
+    if(fijo>0)slices.push({name:'Fijo',amount:fijo,color:'#2563eb'});
+    if(variable>0)slices.push({name:'Variable',amount:variable,color:'#8b5cf6'});
+    if(extra>0)slices.push({name:'Extra',amount:extra,color:'#ec4899'});
+    html+=buildPieBlock('Ingresos por tipo',slices,totalIncomes,'Total ingresos');
+  }
   const catMap={};categories.forEach(c=>catMap[c.id]=c.name);
   const catTotals={};monthTx.forEach(t=>{const name=catMap[t.categoryId]||'Otros';catTotals[name]=(catTotals[name]||0)+t.amount;});
-  const totalMonth=monthTx.reduce((s,t)=>s+t.amount,0);
-  let html=`<div class="chart-view"><h2>Gastos del mes</h2>`;
-  html+=`<p class="chart-subtitle">${getMonthName(currentMonthKey)}</p>`;
   if(monthTx.length===0){
     html+=`<div class="pie-empty"><span class="emoji">📊</span><p>No hay gastos este mes.<br>Carga tu primer gasto para ver el grafico!</p></div>`;
   }else{
@@ -207,23 +239,45 @@ function renderChart(){
     const pieColors=['#0f766e','#14b8a6','#2dd4bf','#5eead4','#99f6e4','#0d9488','#115e59','#134e4a','#f59e0b','#ef4444'];
     let conicGradient=[],currentDeg=0;
     sortedCats.forEach(([name,amount],i)=>{
-      const pct=(amount/totalMonth)*100;
-      const deg=(amount/totalMonth)*360;
+      const deg=(amount/totalExpenses)*360;
       conicGradient.push(`${pieColors[i%pieColors.length]} ${currentDeg}deg ${currentDeg+deg}deg`);
       currentDeg+=deg;
     });
     html+=`<div class="pie-container">`;
     html+=`<div class="pie-chart" style="background:conic-gradient(${conicGradient.join(',')})"></div>`;
-    html+=`<div class="pie-total">${formatCurrency(totalMonth)}<div class="pie-total-label">Total del mes</div></div>`;
+    html+=`<div class="pie-total">${formatCurrency(totalExpenses)}<div class="pie-total-label">Total del mes</div></div>`;
     html+=`<div class="pie-legend">`;
     sortedCats.forEach(([name,amount],i)=>{
-      const pct=((amount/totalMonth)*100).toFixed(1);
+      const pct=((amount/totalExpenses)*100).toFixed(1);
       html+=`<div class="pie-legend-item"><div class="pie-legend-color" style="background:${pieColors[i%pieColors.length]}"></div><div class="pie-legend-name">${name}</div><div class="pie-legend-value">${formatCurrency(amount)}</div><div class="pie-legend-pct">${pct}%</div></div>`;
     });
     html+=`</div></div>`;
   }
-  html+=`</div>`;$('main-content').innerHTML=html;
+  $('chart-body').innerHTML=html;
 }
+function buildPieBlock(title,slices,total,totalLabel){
+  let html=`<div class="pie-container">`;
+  html+=`<h3 class="pie-block-title">${title}</h3>`;
+  let conicGradient=[],currentDeg=0;
+  slices.forEach(s=>{
+    const deg=(s.amount/total)*360;
+    conicGradient.push(`${s.color} ${currentDeg}deg ${currentDeg+deg}deg`);
+    currentDeg+=deg;
+  });
+  html+=`<div class="pie-chart" style="background:conic-gradient(${conicGradient.join(',')})"></div>`;
+  html+=`<div class="pie-total">${formatCurrency(total)}<div class="pie-total-label">${totalLabel}</div></div>`;
+  html+=`<div class="pie-legend">`;
+  slices.forEach(s=>{
+    const pct=((s.amount/total)*100).toFixed(1);
+    html+=`<div class="pie-legend-item"><div class="pie-legend-color" style="background:${s.color}"></div><div class="pie-legend-name">${s.name}</div><div class="pie-legend-value">${formatCurrency(s.amount)}</div><div class="pie-legend-pct">${pct}%</div></div>`;
+  });
+  html+=`</div></div>`;
+  return html;
+}
+function buildPieEmptyBlock(title,message){
+  return `<div class="pie-container"><h3 class="pie-block-title">${title}</h3><div class="pie-empty"><p>${message}</p></div></div>`;
+}
+function onChartMonthChange(){const sel=$('chart-month-select');if(sel)buildChartBody(sel.value);}
 
 /* ===== REPORT ===== */
 function renderReport(){
@@ -281,9 +335,8 @@ function renderSettings(){
   html+=`<div class="settings-section"><div class="setting-row"><div><div class="setting-label">Asistencia para categorizar</div><div class="setting-desc">Preguntar chips de precision al cargar gastos</div></div><div class="toggle ${assistance?'active':''}" onclick="toggleAssistance()"></div></div></div>`;
   html+=`<div class="settings-section"><h3>Nivel 2</h3><button class="btn btn-secondary btn-full" onclick="showView('level2')">Entrar a Nivel 2</button></div>`;
   html+=`<div class="settings-section"><h3>Objetivo de ahorro</h3><button class="btn btn-secondary btn-full" onclick="showView('goal')">Gestionar objetivo</button></div>`;
-  html+=`<div class="settings-section"><h3>Ingresos</h3><button class="btn btn-secondary btn-full" onclick="showView('incomes')">Gestionar ingresos</button></div>`;
   html+=`<div class="settings-section"><h3>Contacto</h3><button class="btn btn-secondary btn-full" onclick="showView('contact')">Escribinos</button></div>`;
-  html+=`<div class="settings-section"><h3>Backup</h3>`;
+  html+=`<div class="settings-section"><h3>Backup</h3><div class="backup-actions"><button class="btn btn-secondary btn-full" onclick="exportBackup()">Exportar backup</button><input type="file" id="backup-file-input" accept=".json" class="hidden" onchange="onImportFile(this)"><button class="btn btn-secondary btn-full" onclick="document.getElementById('backup-file-input').click()">Importar backup</button></div></div>`;
   html+=`<div class="settings-section"><h3>Categorias</h3><button class="btn btn-secondary btn-full" onclick="showView('categories')">Gestionar categorias</button></div>`;
   $('main-content').innerHTML=html;
 }
@@ -293,7 +346,7 @@ function toggleAssistance(){const settings=getData(STORAGE_KEYS.SETTINGS,{});set
 let incomeBudgetSelected=null,incomeTypeSelected=null;
 function renderIncomes(){
   const incomes=getData(STORAGE_KEYS.INCOMES,[]);
-  let html=`<div class="incomes-view"><h2 class="mb-2">Mis ingresos</h2>`;
+  let html=`<div class="incomes-view"><button class="btn-back" onclick="showView('settings')">‹ Volver</button><h2 class="mb-2">Mis ingresos</h2>`;
   html+=`<div class="settings-section">`;
   html+=`<div class="form-group"><label class="form-label">Monto</label><input type="number" id="inc-amount" class="form-input" placeholder="0.00" step="0.01"></div>`;
   html+=`<div class="form-group"><label class="form-label">Descripcion (opcional)</label><input type="text" id="inc-desc" class="form-input" placeholder="Ej: Sueldo, changa, dividendo..."></div>`;
@@ -336,7 +389,7 @@ function renderLevel2(){
 /* ===== GOAL ===== */
 function renderGoal(){
   const goal=getData(STORAGE_KEYS.GOAL);
-  let html=`<div class="goal-view"><h2 class="mb-2">Objetivo de ahorro</h2>`;
+  let html=`<div class="goal-view"><button class="btn-back" onclick="showView('settings')">‹ Volver</button><h2 class="mb-2">Objetivo de ahorro</h2>`;
   if(goal&&!editingGoalId){
     // Calcular proyeccion
     const transactions=getData(STORAGE_KEYS.TRANSACTIONS,[]);
@@ -411,7 +464,7 @@ function onDeleteGoal(){
 
 /* ===== CONTACT ===== */
 function renderContact(){
-  let html=`<div class="contact-view"><h2>Contacto</h2><p class="contact-subtitle">Escribinos si tenes dudas, sugerencias o encontras algun problema</p>`;
+  let html=`<div class="contact-view"><button class="btn-back" onclick="showView('settings')">‹ Volver</button><h2>Contacto</h2><p class="contact-subtitle">Escribinos si tenes dudas, sugerencias o encontras algun problema</p>`;
   html+=`<div class="settings-section">`;
   html+=`<div class="form-group"><label class="form-label">Nombre (opcional)</label><input type="text" id="contact-name" class="form-input" placeholder="Tu nombre"></div>`;
   html+=`<div class="form-group"><label class="form-label">Email *</label><input type="email" id="contact-email" class="form-input" placeholder="tu@email.com"><div class="form-error" id="contact-email-error">El email es obligatorio y debe tener formato valido</div></div>`;
@@ -534,6 +587,39 @@ function showToast(message){
   const toast=$('toast');toast.textContent=message;toast.classList.remove('hidden');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>{toast.classList.add('hidden');},2500);
 }
 
+/* ===== SPLASH ===== */
+let splashTimer=null;
+const SPLASH_FALLBACK='Tu plata tambien necesita una pausa para pensar.';
+function renderSplash(){
+  document.querySelector('.app-header').style.display='none';
+  document.querySelector('.bottom-nav').style.display='none';
+  let html=`<div class="splash-view">`;
+  html+=`<div class="splash-phrase" id="splash-phrase">Cargando frase...</div>`;
+  html+=`<button class="btn btn-primary" id="splash-continue-btn" onclick="onSplashContinue()">Continuar</button>`;
+  html+=`</div>`;
+  $('main-content').innerHTML=html;
+  loadSplashPhrase();
+  splashTimer=setTimeout(onSplashContinue,4000);
+}
+function loadSplashPhrase(){
+  fetch('frases.txt')
+    .then(res=>{if(!res.ok)throw new Error('no ok');return res.text();})
+    .then(text=>{
+      const lines=text.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+      const phrase=lines.length>0?lines[Math.floor(Math.random()*lines.length)]:SPLASH_FALLBACK;
+      $('splash-phrase').textContent=phrase;
+    })
+    .catch(()=>{$('splash-phrase').textContent=SPLASH_FALLBACK;});
+}
+function onSplashContinue(){
+  if(!splashTimer)return;
+  clearTimeout(splashTimer);splashTimer=null;
+  document.querySelector('.app-header').style.display='';
+  document.querySelector('.bottom-nav').style.display='';
+  showView('home');
+  checkLevel2Trigger();
+}
+
 /* ===== EVENT LISTENERS ===== */
 function setupEventListeners(){
   document.querySelectorAll('.nav-btn').forEach(btn=>{if(btn.id!=='nav-add-btn')btn.addEventListener('click',()=>showView(btn.dataset.view));});
@@ -549,7 +635,8 @@ function chooseAddType(type){
   $('add-choice-modal').classList.add('hidden');
   showView(type==='ingreso'?'incomes':'add');
 }
+function hideAddChoice(){$('add-choice-modal').classList.add('hidden');}
 
 /* ===== BOOT ===== */
-function init(){initData();setupEventListeners();showView('home');checkLevel2Trigger();checkAuthSession();}
+function init(){initData();setupEventListeners();showView('splash');checkAuthSession();}
 init();
